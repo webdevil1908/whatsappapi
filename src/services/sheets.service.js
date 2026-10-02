@@ -16,7 +16,7 @@ async function appendToSheet(sheetId, row) {
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: 'Sheet1!A:E',
+      range: 'Orders!A:E',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [row]
