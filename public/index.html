@@ -1,67 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Order Sheet Bot - Admin</title>
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Sheet Bot - Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center p-4">
+
   <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-    <h1 class="text-xl font-bold mb-1">Order Sheet Bot</h1>
-    <p class="text-zinc-400 text-sm mb-6">Add new shop & make bot live</p>
-    
+
+    <h1 class="text-xl font-bold mb-1">
+      Order Sheet Bot
+    </h1>
+
+    <p class="text-zinc-400 text-sm mb-6">
+      Add new shop & make bot live
+    </p>
+
     <div class="space-y-4">
+
       <div>
-        <label class="text-xs text-zinc-400">Shop Name</label>
-        <input id="shop_name" class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500" placeholder="Harpalpur Kirana" />
+        <label class="text-xs text-zinc-400">
+          Shop Name
+        </label>
+
+        <input
+          id="shop_name"
+          type="text"
+          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          placeholder="Harpalpur Kirana"
+        />
       </div>
+
       <div>
-        <label class="text-xs text-zinc-400">WABA Phone ID</label>
-        <input id="waba_phone_id" class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500" placeholder="1234567890" />
+        <label class="text-xs text-zinc-400">
+          WABA Phone ID
+        </label>
+
+        <input
+          id="waba_phone_id"
+          type="text"
+          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          placeholder="1234567890"
+        />
       </div>
+
       <div>
-        <label class="text-xs text-zinc-400">Google Sheet ID</label>
-        <input id="google_sheet_id" class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500" placeholder="1Bxi... sheet id from URL" />
+        <label class="text-xs text-zinc-400">
+          Google Sheet ID
+        </label>
+
+        <input
+          id="google_sheet_id"
+          type="text"
+          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          placeholder="1Bxi... sheet id from URL"
+        />
       </div>
+
       <div>
-        <label class="text-xs text-zinc-400">Owner WhatsApp</label>
-        <input id="owner_phone" class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500" placeholder="919999999999" />
+        <label class="text-xs text-zinc-400">
+          Owner WhatsApp
+        </label>
+
+        <input
+          id="owner_phone"
+          type="text"
+          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
+          placeholder="919999999999"
+        />
       </div>
-      <button id="addBtn" class="w-full bg-white text-black font-semibold py-2.5 rounded-lg hover:bg-zinc-200 transition mt-2">Add & Make Live</button>
+
+      <button
+        id="addBtn"
+        class="w-full bg-white text-black font-semibold py-2.5 rounded-lg hover:bg-zinc-200 transition mt-2"
+      >
+        Add & Make Live
+      </button>
+
       <p id="msg" class="text-sm text-center"></p>
+
     </div>
 
-    <div id="clients" class="mt-8 pt-6 border-t border-zinc-800">
-      <h3 class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Live Clients</h3>
+    <div class="mt-8 pt-6 border-t border-zinc-800">
+
+      <h3 class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">
+        Live Clients
+      </h3>
+
       <div id="list" class="space-y-2"></div>
+
     </div>
+
   </div>
 
 <script>
-async function loadClients(){
-  const res = await fetch('/api/clients/list');
-  const data = await res.json();
-  document.getElementById('list').innerHTML = data.map(c => `
-    <div class="bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 flex justify-between">
-      <span class="text-sm">${c.shop_name}</span>
-      <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">${c.plan_status}</span>
-    </div>`).join('');
+
+const shopNameInput = document.getElementById('shop_name');
+const wabaPhoneIdInput = document.getElementById('waba_phone_id');
+const googleSheetIdInput = document.getElementById('google_sheet_id');
+const ownerPhoneInput = document.getElementById('owner_phone');
+
+const addBtn = document.getElementById('addBtn');
+const msg = document.getElementById('msg');
+const list = document.getElementById('list');
+
+
+async function loadClients() {
+
+  try {
+
+    const res = await fetch('/api/clients/list');
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to load clients');
+    }
+
+    list.innerHTML = '';
+
+    if (!data.length) {
+      list.textContent = 'No clients added yet.';
+      list.className = 'text-sm text-zinc-500';
+      return;
+    }
+
+    list.className = 'space-y-2';
+
+    data.forEach(client => {
+
+      const wrapper = document.createElement('div');
+
+      wrapper.className =
+        'bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 flex justify-between';
+
+      const shop = document.createElement('span');
+
+      shop.className = 'text-sm';
+      shop.textContent = client.shop_name || '-';
+
+      const status = document.createElement('span');
+
+      status.className =
+        'text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+
+      status.textContent = client.plan_status || 'active';
+
+      wrapper.appendChild(shop);
+      wrapper.appendChild(status);
+
+      list.appendChild(wrapper);
+
+    });
+
+  } catch (error) {
+
+    console.error('Load clients error:', error);
+
+    list.textContent = 'Failed to load clients.';
+    list.className = 'text-sm text-red-400';
+
+  }
 }
-document.getElementById('addBtn').onclick = async () => {
+
+
+addBtn.addEventListener('click', async () => {
+
   const payload = {
-    shop_name: shop_name.value,
-    waba_phone_id: waba_phone_id.value,
-    google_sheet_id: google_sheet_id.value,
-    owner_phone: owner_phone.value
+    shop_name: shopNameInput.value.trim(),
+    waba_phone_id: wabaPhoneIdInput.value.trim(),
+    google_sheet_id: googleSheetIdInput.value.trim(),
+    owner_phone: ownerPhoneInput.value.trim()
   };
-  const res = await fetch('/api/clients/add', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
-  const data = await res.json();
-  msg.textContent = data.message;
-  msg.className = 'text-sm text-center text-emerald-400';
-  loadClients();
-};
+
+  if (
+    !payload.shop_name ||
+    !payload.waba_phone_id ||
+    !payload.google_sheet_id ||
+    !payload.owner_phone
+  ) {
+
+    msg.textContent = 'Please fill all fields.';
+    msg.className = 'text-sm text-center text-red-400';
+
+    return;
+  }
+
+  addBtn.disabled = true;
+  addBtn.textContent = 'Adding...';
+
+  try {
+
+    const res = await fetch('/api/clients/add', {
+
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json'
+      },
+
+      body: JSON.stringify(payload)
+
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to add client');
+    }
+
+    msg.textContent = data.message;
+    msg.className = 'text-sm text-center text-emerald-400';
+
+    shopNameInput.value = '';
+    wabaPhoneIdInput.value = '';
+    googleSheetIdInput.value = '';
+    ownerPhoneInput.value = '';
+
+    await loadClients();
+
+  } catch (error) {
+
+    console.error('Add client error:', error);
+
+    msg.textContent = error.message;
+    msg.className = 'text-sm text-center text-red-400';
+
+  } finally {
+
+    addBtn.disabled = false;
+    addBtn.textContent = 'Add & Make Live';
+
+  }
+
+});
+
+
 loadClients();
+
 </script>
+
 </body>
 </html>
