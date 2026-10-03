@@ -43,6 +43,16 @@ exports.receive = async (req, res) => {
       return;
     }
 
+    // Only process normal text messages.
+    // Images, audio, stickers, unsupported messages, etc. are ignored.
+    if (message.type !== 'text') {
+      console.log(
+        'Ignoring unsupported message type:',
+        message.type
+      );
+      return;
+    }
+
     const client = await findByPhoneId(phoneId);
 
     const sheetId =
@@ -63,7 +73,12 @@ exports.receive = async (req, res) => {
     }
 
     const customerPhone = message.from;
-    const text = message.text?.body || `[${message.type}]`;
+    const text = message.text?.body?.trim();
+
+    if (!text) {
+      console.log('Empty text message, ignoring');
+      return;
+    }
 
     const { qty, item } = parseOrder(text);
 
