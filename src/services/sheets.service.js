@@ -38,6 +38,7 @@ async function appendToSheet(sheetId, row) {
   }
 }
 
+
 async function appendPaymentToSheet(sheetId, row) {
   try {
     if (!sheetId) {
@@ -79,7 +80,84 @@ async function appendPaymentToSheet(sheetId, row) {
   }
 }
 
+
+// =========================
+// GET ORDERS
+// =========================
+
+async function getOrders(sheetId) {
+  try {
+    if (!sheetId) {
+      throw new Error('Sheet ID missing');
+    }
+
+    const sheets = getSheetsClient();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: 'Orders!A:E'
+    });
+
+    const rows = response.data.values || [];
+
+    if (rows.length <= 1) {
+      return [];
+    }
+
+    return rows.slice(1).reverse();
+
+  } catch (error) {
+    console.error(
+      'Get Orders Error:',
+      error.message,
+      error.response?.data || ''
+    );
+
+    return [];
+  }
+}
+
+
+// =========================
+// GET PAYMENTS
+// =========================
+
+async function getPayments(sheetId) {
+  try {
+    if (!sheetId) {
+      throw new Error('Sheet ID missing');
+    }
+
+    const sheets = getSheetsClient();
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: sheetId,
+      range: 'Payments!A:C'
+    });
+
+    const rows = response.data.values || [];
+
+    if (rows.length <= 1) {
+      return [];
+    }
+
+    return rows.slice(1).reverse();
+
+  } catch (error) {
+    console.error(
+      'Get Payments Error:',
+      error.message,
+      error.response?.data || ''
+    );
+
+    return [];
+  }
+}
+
+
 module.exports = {
   appendToSheet,
-  appendPaymentToSheet
+  appendPaymentToSheet,
+  getOrders,
+  getPayments
 };

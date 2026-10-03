@@ -1,246 +1,1355 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Sheet Bot - Admin</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <meta
+    name="theme-color"
+    content="#16a34a"
+  />
+
+  <link
+    rel="manifest"
+    href="/manifest.json"
+  />
+
+  <title>Order Sheet Bot</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
 </head>
 
-<body class="bg-zinc-950 text-white min-h-screen flex items-center justify-center p-4">
 
-  <div class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+<body class="bg-gray-100 min-h-screen">
 
-    <h1 class="text-xl font-bold mb-1">
-      Order Sheet Bot
-    </h1>
 
-    <p class="text-zinc-400 text-sm mb-6">
-      Add new shop & make bot live
-    </p>
+  <!-- ==================================================
+       LOGIN SCREEN
+  =================================================== -->
 
-    <div class="space-y-4">
+  <div
+    id="loginScreen"
+    class="min-h-screen flex items-center justify-center px-4"
+  >
 
-      <div>
-        <label class="text-xs text-zinc-400">
-          Shop Name
+    <div
+      class="bg-white w-full max-w-md rounded-2xl shadow-lg p-6"
+    >
+
+      <div class="text-center mb-6">
+
+        <div class="text-4xl mb-2">
+          📲
+        </div>
+
+        <h1 class="text-2xl font-bold text-gray-800">
+          Order Sheet Bot
+        </h1>
+
+        <p class="text-gray-500 text-sm mt-1">
+          Merchant Dashboard
+        </p>
+
+      </div>
+
+
+      <form id="loginForm">
+
+        <label
+          class="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Dashboard Password
         </label>
 
         <input
-          id="shop_name"
-          type="text"
-          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
-          placeholder="Harpalpur Kirana"
+          id="password"
+          type="password"
+          placeholder="Enter password"
+          required
+          autocomplete="current-password"
+          class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
-      </div>
 
-      <div>
-        <label class="text-xs text-zinc-400">
-          WABA Phone ID
-        </label>
 
-        <input
-          id="waba_phone_id"
-          type="text"
-          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
-          placeholder="1234567890"
-        />
-      </div>
+        <button
+          id="loginBtn"
+          type="submit"
+          class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition"
+        >
+          Login
+        </button>
 
-      <div>
-        <label class="text-xs text-zinc-400">
-          Google Sheet ID
-        </label>
 
-        <input
-          id="google_sheet_id"
-          type="text"
-          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
-          placeholder="1Bxi... sheet id from URL"
-        />
-      </div>
+        <p
+          id="loginMessage"
+          class="text-sm text-center mt-3"
+        ></p>
 
-      <div>
-        <label class="text-xs text-zinc-400">
-          Owner WhatsApp
-        </label>
-
-        <input
-          id="owner_phone"
-          type="text"
-          class="w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-violet-500"
-          placeholder="919999999999"
-        />
-      </div>
-
-      <button
-        id="addBtn"
-        class="w-full bg-white text-black font-semibold py-2.5 rounded-lg hover:bg-zinc-200 transition mt-2"
-      >
-        Add & Make Live
-      </button>
-
-      <p id="msg" class="text-sm text-center"></p>
-
-    </div>
-
-    <div class="mt-8 pt-6 border-t border-zinc-800">
-
-      <h3 class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">
-        Live Clients
-      </h3>
-
-      <div id="list" class="space-y-2"></div>
+      </form>
 
     </div>
 
   </div>
 
-<script>
-
-const shopNameInput = document.getElementById('shop_name');
-const wabaPhoneIdInput = document.getElementById('waba_phone_id');
-const googleSheetIdInput = document.getElementById('google_sheet_id');
-const ownerPhoneInput = document.getElementById('owner_phone');
-
-const addBtn = document.getElementById('addBtn');
-const msg = document.getElementById('msg');
-const list = document.getElementById('list');
 
 
-async function loadClients() {
+  <!-- ==================================================
+       DASHBOARD
+  =================================================== -->
 
-  try {
+  <div
+    id="dashboardScreen"
+    class="hidden min-h-screen"
+  >
 
-    const res = await fetch('/api/clients/list');
-    const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || 'Failed to load clients');
+    <!-- HEADER -->
+
+    <header class="bg-white border-b">
+
+      <div
+        class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between"
+      >
+
+        <div>
+
+          <h1 class="text-xl font-bold text-gray-800">
+            📲 Order Sheet Bot
+          </h1>
+
+          <p class="text-xs text-gray-500">
+            WhatsApp Merchant Dashboard
+          </p>
+
+        </div>
+
+
+        <button
+          id="logoutBtn"
+          class="text-sm text-red-600 font-medium"
+        >
+          Logout
+        </button>
+
+      </div>
+
+    </header>
+
+
+
+    <!-- MAIN -->
+
+    <main class="max-w-5xl mx-auto px-4 py-6">
+
+
+      <!-- ==============================
+           STATS
+      =============================== -->
+
+      <div
+        class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
+      >
+
+
+        <!-- Orders -->
+
+        <div
+          class="bg-white rounded-2xl p-4 shadow-sm"
+        >
+
+          <p class="text-xs text-gray-500">
+            Today's Orders
+          </p>
+
+          <p
+            id="todayOrders"
+            class="text-3xl font-bold text-gray-800 mt-1"
+          >
+            —
+          </p>
+
+        </div>
+
+
+        <!-- Payments -->
+
+        <div
+          class="bg-white rounded-2xl p-4 shadow-sm"
+        >
+
+          <p class="text-xs text-gray-500">
+            Today's Payments
+          </p>
+
+          <p
+            id="todayPayments"
+            class="text-3xl font-bold text-gray-800 mt-1"
+          >
+            —
+          </p>
+
+        </div>
+
+
+        <!-- Total Orders -->
+
+        <div
+          class="bg-white rounded-2xl p-4 shadow-sm"
+        >
+
+          <p class="text-xs text-gray-500">
+            Total Orders
+          </p>
+
+          <p
+            id="totalOrders"
+            class="text-3xl font-bold text-gray-800 mt-1"
+          >
+            —
+          </p>
+
+        </div>
+
+
+        <!-- Total Payments -->
+
+        <div
+          class="bg-white rounded-2xl p-4 shadow-sm"
+        >
+
+          <p class="text-xs text-gray-500">
+            Total Payments
+          </p>
+
+          <p
+            id="totalPayments"
+            class="text-3xl font-bold text-gray-800 mt-1"
+          >
+            —
+          </p>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ==============================
+           SEND WHATSAPP
+      =============================== -->
+
+      <div
+        class="bg-white rounded-2xl shadow-sm p-5 mb-6"
+      >
+
+        <div
+          class="flex items-center justify-between mb-5"
+        >
+
+          <div>
+
+            <h2 class="text-lg font-bold text-gray-800">
+              Send WhatsApp Message
+            </h2>
+
+            <p class="text-sm text-gray-500 mt-1">
+              Send a message directly from your business WhatsApp.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <!-- Phone -->
+
+        <div class="mb-4">
+
+          <label
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Customer Phone Number
+          </label>
+
+          <input
+            id="phoneNumber"
+            type="tel"
+            inputmode="numeric"
+            placeholder="919929017930"
+            autocomplete="tel"
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+
+          <p class="text-xs text-gray-500 mt-1">
+            Example: 919929017930
+          </p>
+
+        </div>
+
+
+        <!-- Message -->
+
+        <div class="mb-4">
+
+          <label
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Message
+          </label>
+
+          <textarea
+            id="message"
+            rows="5"
+            placeholder="Type your WhatsApp message..."
+            class="w-full border border-gray-300 rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+          ></textarea>
+
+        </div>
+
+
+        <!-- Send -->
+
+        <button
+          id="sendBtn"
+          type="button"
+          class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl transition"
+        >
+
+          <span id="sendBtnText">
+            Send WhatsApp
+          </span>
+
+        </button>
+
+
+        <div
+          id="sendResult"
+          class="hidden mt-4 rounded-xl px-4 py-3 text-sm"
+        ></div>
+
+      </div>
+
+
+
+      <!-- ==============================
+           RECENT ORDERS
+      =============================== -->
+
+      <div
+        class="bg-white rounded-2xl shadow-sm p-5 mb-6"
+      >
+
+        <div
+          class="flex items-center justify-between mb-4"
+        >
+
+          <h2 class="text-lg font-bold text-gray-800">
+            Recent Orders
+          </h2>
+
+          <button
+            id="refreshBtn"
+            class="text-sm text-green-600 font-medium"
+          >
+            Refresh
+          </button>
+
+        </div>
+
+
+        <div
+          id="ordersContainer"
+          class="overflow-x-auto"
+        >
+
+          <p class="text-sm text-gray-500">
+            Loading orders...
+          </p>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- ==============================
+           RECENT PAYMENTS
+      =============================== -->
+
+      <div
+        class="bg-white rounded-2xl shadow-sm p-5"
+      >
+
+        <h2 class="text-lg font-bold text-gray-800 mb-4">
+          Recent Payments
+        </h2>
+
+
+        <div
+          id="paymentsContainer"
+          class="overflow-x-auto"
+        >
+
+          <p class="text-sm text-gray-500">
+            Loading payments...
+          </p>
+
+        </div>
+
+      </div>
+
+
+    </main>
+
+  </div>
+
+
+
+  <!-- ==================================================
+       JAVASCRIPT
+  =================================================== -->
+
+  <script>
+
+
+    // =========================
+    // ELEMENTS
+    // =========================
+
+    const loginScreen =
+      document.getElementById('loginScreen');
+
+    const dashboardScreen =
+      document.getElementById('dashboardScreen');
+
+    const loginForm =
+      document.getElementById('loginForm');
+
+    const passwordInput =
+      document.getElementById('password');
+
+    const loginMessage =
+      document.getElementById('loginMessage');
+
+    const loginBtn =
+      document.getElementById('loginBtn');
+
+    const logoutBtn =
+      document.getElementById('logoutBtn');
+
+    const phoneInput =
+      document.getElementById('phoneNumber');
+
+    const messageInput =
+      document.getElementById('message');
+
+    const sendBtn =
+      document.getElementById('sendBtn');
+
+    const sendBtnText =
+      document.getElementById('sendBtnText');
+
+    const sendResult =
+      document.getElementById('sendResult');
+
+    const refreshBtn =
+      document.getElementById('refreshBtn');
+
+    const todayOrders =
+      document.getElementById('todayOrders');
+
+    const todayPayments =
+      document.getElementById('todayPayments');
+
+    const totalOrders =
+      document.getElementById('totalOrders');
+
+    const totalPayments =
+      document.getElementById('totalPayments');
+
+    const ordersContainer =
+      document.getElementById('ordersContainer');
+
+    const paymentsContainer =
+      document.getElementById('paymentsContainer');
+
+
+
+    // =========================
+    // SESSION
+    // =========================
+
+    function getToken() {
+
+      return sessionStorage.getItem(
+        'dashboardToken'
+      );
+
     }
 
-    list.innerHTML = '';
 
-    if (!data.length) {
-      list.textContent = 'No clients added yet.';
-      list.className = 'text-sm text-zinc-500';
-      return;
+    function saveToken(token) {
+
+      sessionStorage.setItem(
+        'dashboardToken',
+        token
+      );
+
     }
 
-    list.className = 'space-y-2';
 
-    data.forEach(client => {
+    function removeToken() {
 
-      const wrapper = document.createElement('div');
+      sessionStorage.removeItem(
+        'dashboardToken'
+      );
 
-      wrapper.className =
-        'bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 flex justify-between';
-
-      const shop = document.createElement('span');
-
-      shop.className = 'text-sm';
-      shop.textContent = client.shop_name || '-';
-
-      const status = document.createElement('span');
-
-      status.className =
-        'text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-
-      status.textContent = client.plan_status || 'active';
-
-      wrapper.appendChild(shop);
-      wrapper.appendChild(status);
-
-      list.appendChild(wrapper);
-
-    });
-
-  } catch (error) {
-
-    console.error('Load clients error:', error);
-
-    list.textContent = 'Failed to load clients.';
-    list.className = 'text-sm text-red-400';
-
-  }
-}
-
-
-addBtn.addEventListener('click', async () => {
-
-  const payload = {
-    shop_name: shopNameInput.value.trim(),
-    waba_phone_id: wabaPhoneIdInput.value.trim(),
-    google_sheet_id: googleSheetIdInput.value.trim(),
-    owner_phone: ownerPhoneInput.value.trim()
-  };
-
-  if (
-    !payload.shop_name ||
-    !payload.waba_phone_id ||
-    !payload.google_sheet_id ||
-    !payload.owner_phone
-  ) {
-
-    msg.textContent = 'Please fill all fields.';
-    msg.className = 'text-sm text-center text-red-400';
-
-    return;
-  }
-
-  addBtn.disabled = true;
-  addBtn.textContent = 'Adding...';
-
-  try {
-
-    const res = await fetch('/api/clients/add', {
-
-      method: 'POST',
-
-      headers: {
-        'Content-Type': 'application/json'
-      },
-
-      body: JSON.stringify(payload)
-
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      throw new Error(data.message || 'Failed to add client');
     }
 
-    msg.textContent = data.message;
-    msg.className = 'text-sm text-center text-emerald-400';
-
-    shopNameInput.value = '';
-    wabaPhoneIdInput.value = '';
-    googleSheetIdInput.value = '';
-    ownerPhoneInput.value = '';
-
-    await loadClients();
-
-  } catch (error) {
-
-    console.error('Add client error:', error);
-
-    msg.textContent = error.message;
-    msg.className = 'text-sm text-center text-red-400';
-
-  } finally {
-
-    addBtn.disabled = false;
-    addBtn.textContent = 'Add & Make Live';
-
-  }
-
-});
 
 
-loadClients();
+    // =========================
+    // SHOW DASHBOARD
+    // =========================
 
-</script>
+    function showDashboard() {
+
+      loginScreen.classList.add('hidden');
+
+      dashboardScreen.classList.remove('hidden');
+
+      passwordInput.value = '';
+
+      loadDashboard();
+
+    }
+
+
+
+    // =========================
+    // LOGIN
+    // =========================
+
+    loginForm.addEventListener(
+      'submit',
+      async (event) => {
+
+        event.preventDefault();
+
+        const password =
+          passwordInput.value.trim();
+
+
+        if (!password) {
+
+          loginMessage.textContent =
+            'Password required.';
+
+          loginMessage.className =
+            'text-sm text-center mt-3 text-red-600';
+
+          return;
+
+        }
+
+
+        loginBtn.disabled = true;
+
+        loginBtn.textContent =
+          'Logging in...';
+
+
+        try {
+
+          const response =
+            await fetch(
+              '/api/dashboard/login',
+              {
+                method: 'POST',
+
+                headers: {
+                  'Content-Type':
+                    'application/json'
+                },
+
+                body: JSON.stringify({
+                  password
+                })
+              }
+            );
+
+
+          const data =
+            await response.json();
+
+
+          if (
+            !response.ok ||
+            !data.success ||
+            !data.token
+          ) {
+
+            throw new Error(
+              data.message ||
+              'Invalid password'
+            );
+
+          }
+
+
+          saveToken(data.token);
+
+          showDashboard();
+
+
+        } catch (error) {
+
+          loginMessage.textContent =
+            error.message;
+
+          loginMessage.className =
+            'text-sm text-center mt-3 text-red-600';
+
+        } finally {
+
+          loginBtn.disabled = false;
+
+          loginBtn.textContent =
+            'Login';
+
+        }
+
+      }
+    );
+
+
+
+    // =========================
+    // LOAD DASHBOARD
+    // =========================
+
+    async function loadDashboard() {
+
+      const token = getToken();
+
+
+      if (!token) {
+
+        return;
+
+      }
+
+
+      try {
+
+        const response =
+          await fetch(
+            '/api/dashboard/stats',
+            {
+              method: 'GET',
+
+              headers: {
+                'Authorization':
+                  `Bearer ${token}`
+              }
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (response.status === 401) {
+
+          handleSessionExpired();
+
+          return;
+
+        }
+
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            'Dashboard data failed'
+          );
+
+        }
+
+
+        // Stats
+
+        todayOrders.textContent =
+          data.stats?.todayOrders ?? 0;
+
+        todayPayments.textContent =
+          data.stats?.todayPayments ?? 0;
+
+        totalOrders.textContent =
+        data.stats?.totalOrders ?? 0;
+
+        totalPayments.textContent =
+        data.stats?.totalPayments ?? 0;
+
+
+        // Tables
+
+        renderOrders(
+          data.recentOrders || []
+        );
+
+        renderPayments(
+          data.recentPayments || []
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          'Dashboard Load Error:',
+          error
+        );
+
+        ordersContainer.innerHTML =
+          `<p class="text-sm text-red-600">
+            Failed to load orders.
+          </p>`;
+
+        paymentsContainer.innerHTML =
+          `<p class="text-sm text-red-600">
+            Failed to load payments.
+          </p>`;
+
+      }
+
+    }
+
+
+
+    // =========================
+    // RENDER ORDERS
+    // =========================
+
+    function renderOrders(rows) {
+
+      if (!rows.length) {
+
+        ordersContainer.innerHTML =
+          `<p class="text-sm text-gray-500">
+            No orders yet.
+          </p>`;
+
+        return;
+
+      }
+
+
+      let html = `
+        <table class="w-full text-sm">
+
+          <thead>
+
+            <tr class="border-b text-left">
+
+              <th class="py-3 pr-4">
+                Time
+              </th>
+
+              <th class="py-3 pr-4">
+                Customer
+              </th>
+
+              <th class="py-3 pr-4">
+                Item
+              </th>
+
+              <th class="py-3">
+                Qty
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+      `;
+
+
+      rows.forEach(row => {
+
+        const timestamp =
+          formatDate(row[0]);
+
+        const customer =
+          row[1] || '-';
+
+        const item =
+          row[3] || '-';
+
+        const quantity =
+          row[4] || '-';
+
+
+        html += `
+          <tr class="border-b">
+
+            <td class="py-3 pr-4 whitespace-nowrap">
+              ${escapeHtml(timestamp)}
+            </td>
+
+            <td class="py-3 pr-4 whitespace-nowrap">
+              ${escapeHtml(customer)}
+            </td>
+
+            <td class="py-3 pr-4">
+              ${escapeHtml(item)}
+            </td>
+
+            <td class="py-3">
+              ${escapeHtml(quantity)}
+            </td>
+
+          </tr>
+        `;
+
+      });
+
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+
+      ordersContainer.innerHTML =
+        html;
+
+    }
+
+
+
+    // =========================
+    // RENDER PAYMENTS
+    // =========================
+
+    function renderPayments(rows) {
+
+      if (!rows.length) {
+
+        paymentsContainer.innerHTML =
+          `<p class="text-sm text-gray-500">
+            No payments yet.
+          </p>`;
+
+        return;
+
+      }
+
+
+      let html = `
+        <table class="w-full text-sm">
+
+          <thead>
+
+            <tr class="border-b text-left">
+
+              <th class="py-3 pr-4">
+                Time
+              </th>
+
+              <th class="py-3 pr-4">
+                Customer
+              </th>
+
+              <th class="py-3">
+                Message
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+      `;
+
+
+      rows.forEach(row => {
+
+        const timestamp =
+          formatDate(row[0]);
+
+        const customer =
+          row[1] || '-';
+
+        const message =
+          row[2] || '-';
+
+
+        html += `
+          <tr class="border-b">
+
+            <td class="py-3 pr-4 whitespace-nowrap">
+              ${escapeHtml(timestamp)}
+            </td>
+
+            <td class="py-3 pr-4 whitespace-nowrap">
+              ${escapeHtml(customer)}
+            </td>
+
+            <td class="py-3">
+              ${escapeHtml(message)}
+            </td>
+
+          </tr>
+        `;
+
+      });
+
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+
+      paymentsContainer.innerHTML =
+        html;
+
+    }
+
+
+
+    // =========================
+    // SEND WHATSAPP
+    // =========================
+
+    sendBtn.addEventListener(
+      'click',
+      async () => {
+
+        const token =
+          getToken();
+
+
+        if (!token) {
+
+          handleSessionExpired();
+
+          return;
+
+        }
+
+
+        const phone =
+          phoneInput.value
+            .replace(/\D/g, '');
+
+
+        const message =
+          messageInput.value.trim();
+
+
+        if (!phone) {
+
+          showResult(
+            'Please enter customer phone number.',
+            false
+          );
+
+          return;
+
+        }
+
+
+        if (!message) {
+
+          showResult(
+            'Please enter a message.',
+            false
+          );
+
+          return;
+
+        }
+
+
+        sendBtn.disabled = true;
+
+        sendBtn.classList.add(
+          'opacity-60',
+          'cursor-not-allowed'
+        );
+
+        sendBtnText.textContent =
+          'Sending...';
+
+
+        try {
+
+          const response =
+            await fetch(
+              '/api/dashboard/send-whatsapp',
+              {
+
+                method: 'POST',
+
+                headers: {
+
+                  'Content-Type':
+                    'application/json',
+
+                  'Authorization':
+                    `Bearer ${token}`
+
+                },
+
+                body: JSON.stringify({
+                  phone,
+                  message
+                })
+
+              }
+            );
+
+
+          const data =
+            await response.json();
+
+
+          if (response.status === 401) {
+
+            handleSessionExpired();
+
+            return;
+
+          }
+
+
+          if (
+            !response.ok ||
+            !data.success
+          ) {
+
+            throw new Error(
+              data.message ||
+              'Message sending failed'
+            );
+
+          }
+
+
+          showResult(
+            '✅ WhatsApp message sent successfully.',
+            true
+          );
+
+
+          messageInput.value = '';
+
+
+        } catch (error) {
+
+          showResult(
+            '❌ ' + error.message,
+            false
+          );
+
+        } finally {
+
+          sendBtn.disabled = false;
+
+          sendBtn.classList.remove(
+            'opacity-60',
+            'cursor-not-allowed'
+          );
+
+          sendBtnText.textContent =
+            'Send WhatsApp';
+
+        }
+
+      }
+    );
+
+
+
+    // =========================
+    // REFRESH
+    // =========================
+
+    refreshBtn.addEventListener(
+      'click',
+      async () => {
+
+        refreshBtn.textContent =
+          'Loading...';
+
+        await loadDashboard();
+
+        refreshBtn.textContent =
+          'Refresh';
+
+      }
+    );
+
+
+
+    // =========================
+    // LOGOUT
+    // =========================
+
+    logoutBtn.addEventListener(
+      'click',
+      async () => {
+
+        const token =
+          getToken();
+
+
+        try {
+
+          if (token) {
+
+            await fetch(
+              '/api/dashboard/logout',
+              {
+
+                method: 'POST',
+
+                headers: {
+                  'Authorization':
+                    `Bearer ${token}`
+                }
+
+              }
+            );
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            'Logout Error:',
+            error
+          );
+
+        } finally {
+
+          removeToken();
+
+          dashboardScreen.classList.add(
+            'hidden'
+          );
+
+          loginScreen.classList.remove(
+            'hidden'
+          );
+
+          passwordInput.value = '';
+
+          phoneInput.value = '';
+
+          messageInput.value = '';
+
+          hideResult();
+
+        }
+
+      }
+    );
+
+
+
+    // =========================
+    // SESSION EXPIRED
+    // =========================
+
+    function handleSessionExpired() {
+
+      removeToken();
+
+      dashboardScreen.classList.add(
+        'hidden'
+      );
+
+      loginScreen.classList.remove(
+        'hidden'
+      );
+
+      loginMessage.textContent =
+        'Session expired. Please login again.';
+
+      loginMessage.className =
+        'text-sm text-center mt-3 text-red-600';
+
+    }
+
+
+
+    // =========================
+    // RESULT MESSAGE
+    // =========================
+
+    function showResult(
+      message,
+      success
+    ) {
+
+      sendResult.textContent =
+        message;
+
+
+      sendResult.classList.remove(
+        'hidden',
+        'bg-green-50',
+        'text-green-700',
+        'bg-red-50',
+        'text-red-700'
+      );
+
+
+      if (success) {
+
+        sendResult.classList.add(
+          'bg-green-50',
+          'text-green-700'
+        );
+
+      } else {
+
+        sendResult.classList.add(
+          'bg-red-50',
+          'text-red-700'
+        );
+
+      }
+
+    }
+
+
+    function hideResult() {
+
+      sendResult.classList.add(
+        'hidden'
+      );
+
+    }
+
+
+
+    // =========================
+    // FORMAT DATE
+    // =========================
+
+    function formatDate(value) {
+
+      if (!value) {
+        return '-';
+      }
+
+
+      const date =
+        new Date(value);
+
+
+      if (Number.isNaN(
+        date.getTime()
+      )) {
+
+        return String(value);
+
+      }
+
+
+      return date.toLocaleString(
+        'en-IN',
+        {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      );
+
+    }
+
+
+
+    // =========================
+    // HTML ESCAPE
+    // =========================
+
+    function escapeHtml(value) {
+
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+
+    }
+
+
+
+    // =========================
+    // EXISTING SESSION
+    // =========================
+
+    if (getToken()) {
+
+      showDashboard();
+
+    }
+
+
+    // =========================
+    // SERVICE WORKER
+    // =========================
+
+    if ('serviceWorker' in navigator) {
+
+      window.addEventListener(
+        'load',
+        () => {
+
+          navigator.serviceWorker
+            .register('/sw.js')
+            .then(() => {
+
+              console.log(
+                'Service Worker registered'
+              );
+
+            })
+            .catch((error) => {
+
+              console.error(
+                'Service Worker registration failed:',
+                error
+              );
+
+            });
+
+        }
+      );
+
+    }
+
+  </script>
 
 </body>
+
 </html>
