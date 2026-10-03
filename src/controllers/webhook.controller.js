@@ -3,6 +3,9 @@ const { parseOrder } = require('../services/parser.service');
 const { appendToSheet } = require('../services/sheets.service');
 const { sendWhatsAppMessage } = require('../services/whatsapp.service');
 
+// Prevent duplicate webhook processing while the server is running
+const processedMessageIds = new Set();
+
 exports.verify = (req, res) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
@@ -43,14 +46,25 @@ exports.receive = async (req, res) => {
       return;
     }
 
-    // Only process normal text messages.
-    // Images, audio, stickers, unsupported messages, etc. are ignored.
+    // Only process text messages
     if (message.type !== 'text') {
       console.log(
         'Ignoring unsupported message type:',
         message.type
       );
       return;
+    }
+
+    // Duplicate message protection
+    const messageId = message.id;
+
+    if (messageId && processedMessageIds.has(messageId)) {
+      console.log('Duplicate message ignored:', messageId);
+      return;
+    }
+
+    if (messageId) {
+      processedMessageIds.add(messageId);
     }
 
     const client = await findByPhoneId(phoneId);
