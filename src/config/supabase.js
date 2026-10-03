@@ -22,13 +22,13 @@ async function getClients() {
   }
 
   return rows.slice(1).map(row => ({
-    id: row[0] || '',
-    shop_name: row[1] || '',
-    waba_phone_id: row[2] || '',
-    google_sheet_id: row[3] || '',
-    owner_phone: row[4] || '',
-    plan_status: row[5] || 'active',
-    created_at: row[6] || ''
+    id: String(row[0] || '').trim(),
+    shop_name: String(row[1] || '').trim(),
+    waba_phone_id: String(row[2] || '').trim(),
+    google_sheet_id: String(row[3] || '').trim(),
+    owner_phone: String(row[4] || '').trim(),
+    plan_status: String(row[5] || 'active').trim(),
+    created_at: String(row[6] || '').trim()
   }));
 }
 
@@ -39,9 +39,18 @@ async function findByPhoneId(phoneId) {
 
   const clients = await getClients();
 
+  const incomingPhoneId = String(phoneId).trim();
+
+  console.log('Looking for WABA Phone ID:', incomingPhoneId);
+  console.log(
+    'Available WABA Phone IDs:',
+    clients.map(client => client.waba_phone_id)
+  );
+
   return (
     clients.find(
-      client => client.waba_phone_id === phoneId
+      client =>
+        String(client.waba_phone_id).trim() === incomingPhoneId
     ) || null
   );
 }
