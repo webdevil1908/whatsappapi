@@ -94,7 +94,12 @@ exports.receive = async (req, res) => {
       return;
     }
 
-    const { qty, item } = parseOrder(text);
+    const { isOrder, qty, item } = parseOrder(text);
+
+    if (!isOrder) {
+      console.log('Not an order, ignoring:', text);
+      return;
+    }
 
     const row = [
       new Date().toISOString(),
