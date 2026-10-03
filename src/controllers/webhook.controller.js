@@ -100,34 +100,52 @@ exports.receive = async (req, res) => {
     }
 
     // Parse order
-    const { isOrder, qty, item } = parseOrder(text);
+    const { isOrder, items } = parseOrder(text);
 
-    if (!isOrder) {
+    if (!isOrder || !items.length) {
       console.log('Not an order, ignoring:', text);
       return;
     }
 
-    // Prepare order row
-    const row = [
-      new Date().toISOString(),
-      customerPhone,
-      text,
-      item || '',
-      qty || ''
-    ];
+    console.log('Parsed order items:', items);
 
-    console.log('SHEET ME DAAL RAHA:', row);
+    // Save every item as a separate row
+    let allSaved = true;
 
-    // Save order to Google Sheet
-    const success = await appendToSheet(sheetId, row);
+    for (const orderItem of items) {
+      const row = [
+        new Date().toISOString(),
+        customerPhone,
+        text,
+        orderItem.item || '',
+        orderItem.qty || ''
+      ];
 
-    if (success) {
-      console.log('Sheet success');
+      console.log('SHEET ME DAAL RAHA:', row);
 
-      // Send successful order confirmation
+      const success = await appendToSheet(sheetId, row);
+
+      if (!success) {
+        allSaved = false;
+        console.log(
+          'Sheet append failed for:',
+          orderItem.item
+        );
+      }
+    }
+
+    // Send confirmation only after all items are saved
+    if (allSaved) {
+      console.log('All order items saved successfully');
+
+      const confirmationLines = items.map(
+        orderItem =>
+          `${orderItem.qty} × ${orderItem.item}`
+      );
+
       const confirmationMessage =
         `✅ Order received!\n\n` +
-        `${qty} × ${item}`;
+        confirmationLines.join('\n');
 
       const messageSent = await sendWhatsAppMessage(
         customerPhone,
@@ -141,9 +159,8 @@ exports.receive = async (req, res) => {
       }
 
     } else {
-      console.log('Sheet append failed');
+      console.log('One or more order items failed');
 
-      // Inform customer if order could not be saved
       const failureMessage =
         '⚠️ Order receive nahi ho paya. Please try again.';
 
