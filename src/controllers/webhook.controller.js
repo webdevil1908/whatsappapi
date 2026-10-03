@@ -1,6 +1,7 @@
 const { findByPhoneId } = require('../config/supabase');
 const { parseOrder } = require('../services/parser.service');
 const { appendToSheet } = require('../services/sheets.service');
+const { sendWhatsAppMessage } = require('../services/whatsapp.service');
 
 exports.verify = (req, res) => {
   const mode = req.query['hub.mode'];
@@ -80,6 +81,22 @@ exports.receive = async (req, res) => {
 
     if (success) {
       console.log('Sheet success');
+
+      const confirmationMessage =
+        `✅ Order received!\n\n` +
+        `${qty} × ${item}`;
+
+      const messageSent = await sendWhatsAppMessage(
+        customerPhone,
+        confirmationMessage
+      );
+
+      if (messageSent) {
+        console.log('Order confirmation sent');
+      } else {
+        console.log('Order confirmation failed');
+      }
+
     } else {
       console.log('Sheet append failed');
     }
