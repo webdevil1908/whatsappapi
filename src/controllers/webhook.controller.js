@@ -1,10 +1,52 @@
 const { findByPhoneId } = require('../config/supabase');
 const { parseOrder } = require('../services/parser.service');
-const { appendToSheet } = require('../services/sheets.service');
+
+const {
+  appendToSheet,
+  appendPaymentToSheet
+} = require('../services/sheets.service');
+
 const { sendWhatsAppMessage } = require('../services/whatsapp.service');
 
-// Prevent duplicate webhook processing while the server is running
+// Prevent duplicate webhook processing while server is running
 const processedMessageIds = new Set();
+
+// Payment keywords
+const paymentKeywords = [
+  'payment',
+  'paid',
+  'paytm',
+  'gpay',
+  'google pay',
+  'phonepe',
+  'upi',
+  'transaction',
+  'txn',
+  'utr',
+  'transfer',
+  'transferred',
+  'payment done',
+  'amount paid',
+  'payment kar diya',
+  'payment kar di',
+  'payment kar diya hai',
+  'payment kar di hai',
+  'paise bhej diye',
+  'paisa bhej diya',
+  'payment bhej diya',
+  'payment bhej di',
+  'payment sent',
+  'paid kar diya',
+  'paid kar di'
+];
+
+function isPaymentMessage(text) {
+  const lowerText = text.toLowerCase().trim();
+
+  return paymentKeywords.some(keyword =>
+    lowerText.includes(keyword)
+  );
+}
 
 exports.verify = (req, res) => {
   const mode = req.query['hub.mode'];
@@ -68,7 +110,7 @@ exports.receive = async (req, res) => {
       processedMessageIds.add(messageId);
     }
 
-    // Find client using WhatsApp Phone Number ID
+    // Find client
     const client = await findByPhoneId(phoneId);
 
     const sheetId =
@@ -99,7 +141,45 @@ exports.receive = async (req, res) => {
       return;
     }
 
-    // Parse order
+    // ==========================================
+    // PAYMENT CHECK
+    // ==========================================
+
+    console.log('Checking payment message:', text);
+
+    if (isPaymentMessage(text)) {
+      console.log('PAYMENT MESSAGE DETECTED:', text);
+
+      const paymentRow = [
+        new Date().toISOString(),
+        customerPhone,
+        text
+      ];
+
+      console.log(
+        'PAYMENTS SHEET ME DAAL RAHA:',
+        paymentRow
+      );
+
+      const paymentSaved = await appendPaymentToSheet(
+        sheetId,
+        paymentRow
+      );
+
+      if (paymentSaved) {
+        console.log('Payment saved successfully');
+      } else {
+        console.log('Payment save failed');
+      }
+
+      // Do NOT process payment as order
+      return;
+    }
+
+    // ==========================================
+    // ORDER PARSING
+    // ==========================================
+
     const { isOrder, items } = parseOrder(text);
 
     if (!isOrder || !items.length) {
@@ -109,9 +189,9 @@ exports.receive = async (req, res) => {
 
     console.log('Parsed order items:', items);
 
-    // Save every item as a separate row
     let allSaved = true;
 
+    // Save every item as separate row
     for (const orderItem of items) {
       const row = [
         new Date().toISOString(),
@@ -123,10 +203,14 @@ exports.receive = async (req, res) => {
 
       console.log('SHEET ME DAAL RAHA:', row);
 
-      const success = await appendToSheet(sheetId, row);
+      const success = await appendToSheet(
+        sheetId,
+        row
+      );
 
       if (!success) {
         allSaved = false;
+
         console.log(
           'Sheet append failed for:',
           orderItem.item
@@ -134,9 +218,14 @@ exports.receive = async (req, res) => {
       }
     }
 
-    // Send confirmation only after all items are saved
+    // ==========================================
+    // ORDER CONFIRMATION
+    // ==========================================
+
     if (allSaved) {
-      console.log('All order items saved successfully');
+      console.log(
+        'All order items saved successfully'
+      );
 
       const confirmationLines = items.map(
         orderItem =>
@@ -147,32 +236,44 @@ exports.receive = async (req, res) => {
         `✅ Order received!\n\n` +
         confirmationLines.join('\n');
 
-      const messageSent = await sendWhatsAppMessage(
-        customerPhone,
-        confirmationMessage
-      );
+      const messageSent =
+        await sendWhatsAppMessage(
+          customerPhone,
+          confirmationMessage
+        );
 
       if (messageSent) {
-        console.log('Order confirmation sent');
+        console.log(
+          'Order confirmation sent'
+        );
       } else {
-        console.log('Order confirmation failed');
+        console.log(
+          'Order confirmation failed'
+        );
       }
 
     } else {
-      console.log('One or more order items failed');
+      console.log(
+        'One or more order items failed'
+      );
 
       const failureMessage =
         '⚠️ Order receive nahi ho paya. Please try again.';
 
-      const messageSent = await sendWhatsAppMessage(
-        customerPhone,
-        failureMessage
-      );
+      const messageSent =
+        await sendWhatsAppMessage(
+          customerPhone,
+          failureMessage
+        );
 
       if (messageSent) {
-        console.log('Order failure message sent');
+        console.log(
+          'Order failure message sent'
+        );
       } else {
-        console.log('Order failure message failed');
+        console.log(
+          'Order failure message failed'
+        );
       }
     }
 
