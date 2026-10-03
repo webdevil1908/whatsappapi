@@ -27,6 +27,7 @@ exports.verify = (req, res) => {
 };
 
 exports.receive = async (req, res) => {
+  // Respond to Meta immediately
   res.sendStatus(200);
 
   try {
@@ -67,6 +68,7 @@ exports.receive = async (req, res) => {
       processedMessageIds.add(messageId);
     }
 
+    // Find client using WhatsApp Phone Number ID
     const client = await findByPhoneId(phoneId);
 
     const sheetId =
@@ -75,7 +77,10 @@ exports.receive = async (req, res) => {
       process.env.SHEET_ID;
 
     if (!sheetId) {
-      console.log('Sheet ID nahi mila, phoneId:', phoneId);
+      console.log(
+        'Sheet ID nahi mila, phoneId:',
+        phoneId
+      );
       return;
     }
 
@@ -94,6 +99,7 @@ exports.receive = async (req, res) => {
       return;
     }
 
+    // Parse order
     const { isOrder, qty, item } = parseOrder(text);
 
     if (!isOrder) {
@@ -101,6 +107,7 @@ exports.receive = async (req, res) => {
       return;
     }
 
+    // Prepare order row
     const row = [
       new Date().toISOString(),
       customerPhone,
@@ -111,11 +118,13 @@ exports.receive = async (req, res) => {
 
     console.log('SHEET ME DAAL RAHA:', row);
 
+    // Save order to Google Sheet
     const success = await appendToSheet(sheetId, row);
 
     if (success) {
       console.log('Sheet success');
 
+      // Send successful order confirmation
       const confirmationMessage =
         `✅ Order received!\n\n` +
         `${qty} × ${item}`;
@@ -133,6 +142,21 @@ exports.receive = async (req, res) => {
 
     } else {
       console.log('Sheet append failed');
+
+      // Inform customer if order could not be saved
+      const failureMessage =
+        '⚠️ Order receive nahi ho paya. Please try again.';
+
+      const messageSent = await sendWhatsAppMessage(
+        customerPhone,
+        failureMessage
+      );
+
+      if (messageSent) {
+        console.log('Order failure message sent');
+      } else {
+        console.log('Order failure message failed');
+      }
     }
 
   } catch (error) {
