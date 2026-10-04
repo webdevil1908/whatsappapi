@@ -6,10 +6,17 @@ const {
   appendPaymentToSheet
 } = require('../services/sheets.service');
 
+const {
+  findCustomerByPhone,
+  addCustomer
+} = require('../services/customers.service');
+
 const { sendWhatsAppMessage } = require('../services/whatsapp.service');
 
-// Prevent duplicate webhook processing while server is running
 const processedMessageIds = new Set();
+
+// Temporary state for customers who are currently registering their name
+const pendingCustomerNames = new Set();
 
 // Payment keywords
 const paymentKeywords = [
@@ -101,8 +108,14 @@ exports.receive = async (req, res) => {
     // Duplicate message protection
     const messageId = message.id;
 
-    if (messageId && processedMessageIds.has(messageId)) {
-      console.log('Duplicate message ignored:', messageId);
+    if (
+      messageId &&
+      processedMessageIds.has(messageId)
+    ) {
+      console.log(
+        'Duplicate message ignored:',
+        messageId
+      );
       return;
     }
 
@@ -137,18 +150,121 @@ exports.receive = async (req, res) => {
     const text = message.text?.body?.trim();
 
     if (!text) {
-      console.log('Empty text message, ignoring');
+      console.log(
+        'Empty text message, ignoring'
+      );
       return;
     }
+
+    // ==========================================
+    // CUSTOMER REGISTRATION
+    // ==========================================
+
+    let customer = null;
+
+    try {
+      customer = await findCustomerByPhone(
+        sheetId,
+        customerPhone
+      );
+    } catch (error) {
+      console.error(
+        'Customer lookup failed:',
+        error.message
+      );
+    }
+
+    // If this number is currently waiting for name
+    if (pendingCustomerNames.has(customerPhone)) {
+      try {
+        const customerName = text.trim();
+
+        if (customerName.length < 2) {
+          await sendWhatsAppMessage(
+            customerPhone,
+            'Please apna valid naam bhejiye.'
+          );
+          return;
+        }
+
+        customer = await addCustomer(
+          sheetId,
+          customerPhone,
+          customerName
+        );
+
+        pendingCustomerNames.delete(
+          customerPhone
+        );
+
+        console.log(
+          'New customer registered:',
+          customer
+        );
+
+        await sendWhatsAppMessage(
+          customerPhone,
+          `✅ Thanks ${customer.name}!\n\nAapka number register ho gaya hai.\nAb apna order bhejiye.`
+        );
+
+        return;
+
+      } catch (error) {
+        console.error(
+          'Customer registration failed:',
+          error.message
+        );
+
+        pendingCustomerNames.delete(
+          customerPhone
+        );
+
+        await sendWhatsAppMessage(
+          customerPhone,
+          '⚠️ Registration nahi ho paya. Please dobara try karein.'
+        );
+
+        return;
+      }
+    }
+
+    // If customer is new, ask for name
+    if (!customer) {
+      pendingCustomerNames.add(customerPhone);
+
+      console.log(
+        'New customer detected:',
+        customerPhone
+      );
+
+      await sendWhatsAppMessage(
+        customerPhone,
+        '👋 Welcome!\n\nPlease apna naam bhejiye.'
+      );
+
+      return;
+    }
+
+    console.log(
+      'Existing customer:',
+      customer.name,
+      customerPhone
+    );
 
     // ==========================================
     // PAYMENT CHECK
     // ==========================================
 
-    console.log('Checking payment message:', text);
+    console.log(
+      'Checking payment message:',
+      text
+    );
 
     if (isPaymentMessage(text)) {
-      console.log('PAYMENT MESSAGE DETECTED:', text);
+      console.log(
+        'PAYMENT MESSAGE DETECTED:',
+        text
+      );
 
       const paymentRow = [
         new Date().toISOString(),
@@ -161,15 +277,20 @@ exports.receive = async (req, res) => {
         paymentRow
       );
 
-      const paymentSaved = await appendPaymentToSheet(
-        sheetId,
-        paymentRow
-      );
+      const paymentSaved =
+        await appendPaymentToSheet(
+          sheetId,
+          paymentRow
+        );
 
       if (paymentSaved) {
-        console.log('Payment saved successfully');
+        console.log(
+          'Payment saved successfully'
+        );
       } else {
-        console.log('Payment save failed');
+        console.log(
+          'Payment save failed'
+        );
       }
 
       // Do NOT process payment as order
@@ -180,14 +301,23 @@ exports.receive = async (req, res) => {
     // ORDER PARSING
     // ==========================================
 
-    const { isOrder, items } = parseOrder(text);
+    const {
+      isOrder,
+      items
+    } = parseOrder(text);
 
     if (!isOrder || !items.length) {
-      console.log('Not an order, ignoring:', text);
+      console.log(
+        'Not an order, ignoring:',
+        text
+      );
       return;
     }
 
-    console.log('Parsed order items:', items);
+    console.log(
+      'Parsed order items:',
+      items
+    );
 
     let allSaved = true;
 
@@ -196,17 +326,22 @@ exports.receive = async (req, res) => {
       const row = [
         new Date().toISOString(),
         customerPhone,
+        customer?.name || '',
         text,
         orderItem.item || '',
         orderItem.qty || ''
       ];
 
-      console.log('SHEET ME DAAL RAHA:', row);
-
-      const success = await appendToSheet(
-        sheetId,
+      console.log(
+        'SHEET ME DAAL RAHA:',
         row
       );
+
+      const success =
+        await appendToSheet(
+          sheetId,
+          row
+        );
 
       if (!success) {
         allSaved = false;
@@ -227,10 +362,11 @@ exports.receive = async (req, res) => {
         'All order items saved successfully'
       );
 
-      const confirmationLines = items.map(
-        orderItem =>
-          `${orderItem.qty} × ${orderItem.item}`
-      );
+      const confirmationLines =
+        items.map(
+          orderItem =>
+            `${orderItem.qty} × ${orderItem.item}`
+        );
 
       const confirmationMessage =
         `✅ Order received!\n\n` +

@@ -16,7 +16,7 @@ async function appendToSheet(sheetId, row) {
 
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: sheetId,
-      range: 'Orders!A:E',
+      range: 'Orders!A:F',
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [row]
@@ -49,7 +49,10 @@ async function appendPaymentToSheet(sheetId, row) {
       throw new Error('Payment row must be an array');
     }
 
-    console.log('Saving payment to Payments sheet:', row);
+    console.log(
+      'Saving payment to Payments sheet:',
+      row
+    );
 
     const sheets = getSheetsClient();
 
@@ -95,7 +98,7 @@ async function getOrders(sheetId) {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: sheetId,
-      range: 'Orders!A:E'
+      range: 'Orders!A:F'
     });
 
     const rows = response.data.values || [];
